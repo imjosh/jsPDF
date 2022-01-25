@@ -1,4 +1,3 @@
-// fixme add tests for lineHeightFactor
 /**
  * @license
  * ====================================================================
