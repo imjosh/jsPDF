@@ -190,7 +190,7 @@ import { jsPDF } from "../jspdf.js";
     var font = options.font || this.getFont();
     var scaleFactor = options.scaleFactor || this.internal.scaleFactor;
     var lineHeightFactor =
-      options.lineHeightFactor || this.internal.getlineHeightFactor();
+      options.lineHeightFactor || this.internal.getLineHeightFactor();
     const maxWidth = options.maxWidth || 0;
     var width = 0;
     var amountOfLines = 0;
