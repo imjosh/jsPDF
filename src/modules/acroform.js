@@ -2624,6 +2624,18 @@ var AcroFormTextField = function() {
 };
 inherit(AcroFormTextField, AcroFormField);
 
+/*
+  PDF 32000-1:2008, 12.7.3.2, “Field Names”, page 434
+  It is possible for different field dictionaries to have the same fully qualified field name if they are descendants of a common ancestor with that name and have no partial field names (T entries) of their own.
+*/
+
+/**
+ * Creates a TextField without an appearance to serve as the common ancestor for a group of child TextFields that share the same fully qualified field name and the same value. Changing the value of one will change the value of all the others.
+ *
+ * @class AcroFormTextFieldGroup
+ * @extends AcroFormTextField
+ * @extends AcroFormField
+ */
 var AcroFormTextFieldGroup = function() {
   AcroFormTextField.call(this);
   this.F = null;
@@ -2654,6 +2666,13 @@ var AcroFormTextFieldGroup = function() {
 };
 inherit(AcroFormTextFieldGroup, AcroFormTextField);
 
+/**
+ * The Child TextField of a TextFieldGroup
+ *
+ * @class AcroFormTextFieldChild
+ * @extends AcroFormTextField
+ * @extends AcroFormField
+ */
 var AcroFormTextFieldChild = function() {
   AcroFormTextField.call(this);
 
@@ -2690,6 +2709,12 @@ var AcroFormTextFieldChild = function() {
 };
 inherit(AcroFormTextFieldChild, AcroFormTextField);
 
+/**
+ *  Creates a new TextFieldChild belonging to the parent TextFieldGroup
+ *
+ * @function AcroFormTextFieldGroup.createChild
+ * @returns {AcroFormTextFieldChild}
+ */
 AcroFormTextFieldGroup.prototype.createChild = function() {
   var child = new AcroFormTextFieldChild();
   child.Parent = this;
