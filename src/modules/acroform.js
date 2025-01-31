@@ -2624,7 +2624,7 @@ var AcroFormTextField = function() {
 };
 inherit(AcroFormTextField, AcroFormField);
 
-var AcroFormTextFieldParent = function() {
+var AcroFormTextFieldGroup = function() {
   AcroFormTextField.call(this);
   this.F = null;
 
@@ -2652,7 +2652,7 @@ var AcroFormTextFieldParent = function() {
     }
   });
 };
-inherit(AcroFormTextFieldParent, AcroFormTextField);
+inherit(AcroFormTextFieldGroup, AcroFormTextField);
 
 var AcroFormTextFieldChild = function() {
   AcroFormTextField.call(this);
@@ -2690,7 +2690,7 @@ var AcroFormTextFieldChild = function() {
 };
 inherit(AcroFormTextFieldChild, AcroFormTextField);
 
-AcroFormTextFieldParent.prototype.createChild = function() {
+AcroFormTextFieldGroup.prototype.createChild = function() {
   var child = new AcroFormTextFieldChild();
   child.Parent = this;
   child.BS = Object.assign({}, child.Parent._BS);
@@ -3839,7 +3839,6 @@ AcroFormAppearance.internal = {
 
 AcroFormAppearance.internal.getWidth = function(formObject) {
   var result = 0;
-  // fixme might not need  && formObject.Rect if textfieldparent doesn't need an xform object
   if (typeof formObject === "object" && formObject.Rect) {
     result = scale(formObject.Rect[2]);
   }
@@ -3848,7 +3847,6 @@ AcroFormAppearance.internal.getWidth = function(formObject) {
 
 AcroFormAppearance.internal.getHeight = function(formObject) {
   var result = 0;
-  // fixme might not need  && formObject.Rect if textfieldparent doesn't need an xform object
 
   if (typeof formObject === "object" && formObject.Rect) {
     result = scale(formObject.Rect[3]);
@@ -3890,7 +3888,7 @@ jsPDFAPI.AcroFormCheckBox = AcroFormCheckBox;
 jsPDFAPI.AcroFormTextField = AcroFormTextField;
 jsPDFAPI.AcroFormPasswordField = AcroFormPasswordField;
 jsPDFAPI.AcroFormAppearance = AcroFormAppearance;
-jsPDFAPI.AcroFormTextFieldParent = AcroFormTextFieldParent;
+jsPDFAPI.AcroFormTextFieldGroup = AcroFormTextFieldGroup;
 
 jsPDFAPI.AcroForm = {
   ChoiceField: AcroFormChoiceField,
@@ -3902,7 +3900,7 @@ jsPDFAPI.AcroForm = {
   RadioButton: AcroFormRadioButton,
   CheckBox: AcroFormCheckBox,
   TextField: AcroFormTextField,
-  TextFieldParent: AcroFormTextFieldParent,
+  TextFieldGroup: AcroFormTextFieldGroup,
   PasswordField: AcroFormPasswordField,
   Appearance: AcroFormAppearance
 };
@@ -3917,7 +3915,7 @@ jsPDF.AcroForm = {
   RadioButton: AcroFormRadioButton,
   CheckBox: AcroFormCheckBox,
   TextField: AcroFormTextField,
-  TextFieldParent: AcroFormTextFieldParent,
+  TextFieldGroup: AcroFormTextFieldGroup,
   PasswordField: AcroFormPasswordField,
   Appearance: AcroFormAppearance
 };
@@ -3935,7 +3933,7 @@ export {
   AcroFormRadioButton,
   AcroFormCheckBox,
   AcroFormTextField,
-  AcroFormTextFieldParent,
+  AcroFormTextFieldGroup,
   AcroFormPasswordField,
   AcroFormAppearance
 };

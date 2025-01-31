@@ -9,7 +9,7 @@ var {
   PasswordField,
   RadioButton,
   Appearance,
-  TextFieldParent
+  TextFieldGroup
 } = jsPDF.AcroForm;
 
 doc.setFontSize(12);
@@ -151,7 +151,7 @@ function addRadioGroups() {
 function addTextFieldGroup() {
   doc.text("TextField Group:", 10, yPos);
 
-  const txtDate = new TextFieldParent();
+  const txtDate = new TextFieldGroup();
   txtDate.fieldName = "Date";
   txtDate.value = new Date().toLocaleDateString("en-US");
   txtDate.borderColor = [0];

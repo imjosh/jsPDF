@@ -1,5 +1,5 @@
 /* eslint-disable no-self-assign */
-/* global describe, it, expect, jsPDF, comparePdf, Button, ComboBox, ChoiceField, EditBox, ListBox, PushButton, CheckBox, TextField, TextFieldParent, PasswordField, RadioButton, AcroForm */
+/* global describe, it, expect, jsPDF, comparePdf, Button, ComboBox, ChoiceField, EditBox, ListBox, PushButton, CheckBox, TextField, TextFieldGroup, PasswordField, RadioButton, AcroForm */
 
 /**
  * Acroform testing
@@ -861,16 +861,16 @@ describe("Module: Acroform Unit Test", function() {
     expect(textField.BS).toEqual(undefined);
   });
 
-  it("Textfield group: AcroFormTextFieldParent, AcroFormTextFieldChild", function() {
-    const textFieldParent = new TextFieldParent();
-    textFieldParent.fieldName = "LastName";
-    textFieldParent.value = "Smith";
-    textFieldParent.borderColor = [0, 0, 1];
-    textFieldParent.backgroundColor = [1, 0, 1];
+  it("Textfield group: AcroFormTextFieldGroup, AcroFormTextFieldChild", function() {
+    const textFieldGroup = new textFieldGroup();
+    textFieldGroup.fieldName = "LastName";
+    textFieldGroup.value = "Smith";
+    textFieldGroup.borderColor = [0, 0, 1];
+    textFieldGroup.backgroundColor = [1, 0, 1];
 
-    expect(textFieldParent.F).toEqual(null);
-    expect(textFieldParent.Kids).toEqual([]);
-    expect(textFieldParent.hasAppearanceStream).toEqual(false);
+    expect(textFieldGroup.F).toEqual(null);
+    expect(textFieldGroup.Kids).toEqual([]);
+    expect(textFieldGroup.hasAppearanceStream).toEqual(false);
 
     const doc = new jsPDF({
       orientation: "p",
@@ -879,20 +879,20 @@ describe("Module: Acroform Unit Test", function() {
       floatPrecision: 2
     });
 
-    doc.addField(textFieldParent);
+    doc.addField(textFieldGroup);
 
-    const child1 = textFieldParent.createChild();
+    const child1 = textFieldGroup.createChild();
     expect(child1.value).toEqual("Smith");
     expect(child1.borderColor).toEqual([0, 0, 1]);
     expect(child1.backgroundColor).toEqual([1, 0, 1]);
     expect(child1.hasAppearanceStream).toEqual(true);
 
-    const child2 = textFieldParent.createChild();
+    const child2 = textFieldGroup.createChild();
     expect(child2.value).toEqual("Smith");
 
     child2.value = "Jones";
     expect(child1.value).toEqual("Jones");
-    expect(textFieldParent.value).toEqual("Jones");
+    expect(textFieldGroup.value).toEqual("Jones");
 
     child2.backgroundColor = [1];
     expect(child2.backgroundColor).toEqual([1]);
@@ -1089,12 +1089,12 @@ describe("Module: Acroform Integration Test", function() {
       floatPrecision: 2
     });
 
-    const txtNameGroup = new TextFieldParent();
+    const txtNameGroup = new TextFieldGroup();
     txtNameGroup.fieldName = "Name";
     txtNameGroup.value = "Smith, Robert";
     doc.addField(txtNameGroup);
 
-    const txtDateGroup = new TextFieldParent();
+    const txtDateGroup = new TextFieldGroup();
     txtDateGroup.fieldName = "Date";
     txtDateGroup.value = "12/31/2033";
     doc.addField(txtDateGroup);
