@@ -2341,7 +2341,7 @@ var AcroFormRadioButton = function() {
   AcroFormButton.call(this);
   this.radio = true;
   this.pushButton = false;
-  this.backgroundColor = [1]; // white // fixme does this need to be here
+  this.backgroundColor = [1];
 
   var _Kids = [];
   Object.defineProperty(this, "Kids", {
