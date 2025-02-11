@@ -1213,6 +1213,10 @@ var AcroFormField = function() {
       return "(" + pdfEscape(encryptor(_T)) + ")";
     },
     set: function(value) {
+      if (this instanceof AcroFormTextFieldChild) {
+        return;
+      }
+
       _T = value.toString();
     }
   });
@@ -2277,10 +2281,12 @@ var AcroFormButton = function() {
     enumerable: true,
     configurable: true,
     get: function() {
+      // fixme is there a difference between this._MK and just _MK? is 'this' necessary?
       return this._MK.CA;
     },
     set: function(value) {
       if (typeof value === "string") {
+      // fixme is there a difference between this._MK and just _MK? is 'this' necessary?
         this._MK.CA = value;
       }
     }
@@ -3864,6 +3870,7 @@ AcroFormAppearance.internal = {
 
 AcroFormAppearance.internal.getWidth = function(formObject) {
   var result = 0;
+  // fixme is  && formObject.Rect necessary? it was possible for .rect to be undefined but i may have fixed that
   if (typeof formObject === "object" && formObject.Rect) {
     result = scale(formObject.Rect[2]);
   }
@@ -3873,6 +3880,7 @@ AcroFormAppearance.internal.getWidth = function(formObject) {
 AcroFormAppearance.internal.getHeight = function(formObject) {
   var result = 0;
 
+  // fixme is  && formObject.Rect necessary?
   if (typeof formObject === "object" && formObject.Rect) {
     result = scale(formObject.Rect[3]);
   }
@@ -3911,9 +3919,9 @@ jsPDFAPI.AcroFormPushButton = AcroFormPushButton;
 jsPDFAPI.AcroFormRadioButton = AcroFormRadioButton;
 jsPDFAPI.AcroFormCheckBox = AcroFormCheckBox;
 jsPDFAPI.AcroFormTextField = AcroFormTextField;
+jsPDFAPI.AcroFormTextFieldGroup = AcroFormTextFieldGroup;
 jsPDFAPI.AcroFormPasswordField = AcroFormPasswordField;
 jsPDFAPI.AcroFormAppearance = AcroFormAppearance;
-jsPDFAPI.AcroFormTextFieldGroup = AcroFormTextFieldGroup;
 
 jsPDFAPI.AcroForm = {
   ChoiceField: AcroFormChoiceField,
