@@ -862,7 +862,7 @@ describe("Module: Acroform Unit Test", function() {
   });
 
   it("Textfield group: AcroFormTextFieldGroup, AcroFormTextFieldChild", function() {
-    const textFieldGroup = new textFieldGroup();
+    const textFieldGroup = new TextFieldGroup();
     textFieldGroup.fieldName = "LastName";
     textFieldGroup.value = "Smith";
     textFieldGroup.borderColor = [0, 0, 1];
