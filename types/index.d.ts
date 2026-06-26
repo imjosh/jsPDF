@@ -374,6 +374,9 @@ declare module "jspdf" {
 
   export class AcroFormPasswordField {}
   export interface AcroFormPasswordField extends AcroFormTextField {}
+
+  export class AcroFormSignatureField {}
+  export interface AcroFormSignatureField extends AcroFormField {}
   // jsPDF plugin: Context2D
 
   export interface Gradient {
@@ -1025,6 +1028,18 @@ declare module "jspdf" {
 
     // jsPDF plugin: AcroForm
     addField(field: AcroFormField): jsPDF;
+    addSignatureField(
+      name: string,
+      x: number,
+      y: number,
+      width: number,
+      height: number,
+      options?: {
+        borderColor?: number[];
+        backgroundColor?: number[];
+        borderWidth?: number;
+      }
+    ): jsPDF;
 
     AcroForm: {
       ChoiceField(): AcroFormChoiceField;
@@ -1037,6 +1052,7 @@ declare module "jspdf" {
       CheckBox(): AcroFormCheckBox;
       TextField(): AcroFormTextField;
       PasswordField(): AcroFormPasswordField;
+      SignatureField(): AcroFormSignatureField;
       Appearance(): any;
     };
 

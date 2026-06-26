@@ -16,6 +16,7 @@ window.loadGlobals = function loadGlobals() {
   window.TextField = jsPDF.AcroFormTextField;
   window.TextFieldGroup = jsPDF.AcroFormTextFieldGroup;
   window.PasswordField = jsPDF.AcroFormPasswordField;
+  window.SignatureField = jsPDF.AcroFormSignatureField;
   window.Appearance = jsPDF.AcroFormAppearance;
   window.Canvg = window.canvg.Canvg;
 };

@@ -14,7 +14,8 @@ import {
   AcroFormEditBox,
   AcroFormPushButton,
   AcroFormListBox,
-  AcroFormTextField
+  AcroFormTextField,
+  AcroFormSignatureField
 } from "jspdf";
 
 function pubsub() {
@@ -42,6 +43,7 @@ function classes() {
   new AcroFormCheckBox();
   new AcroFormTextField();
   new AcroFormPasswordField();
+  new AcroFormSignatureField();
 }
 
 function test_simple_two_page_document() {
@@ -575,6 +577,14 @@ function test_AcroForm() {
   const textField = doc.AcroForm.TextField();
   textField.value = "Test";
   textField.defaultValue = "";
+
+  const signatureField = doc.AcroForm.SignatureField();
+  signatureField.fieldName = "Signature1";
+  doc.addSignatureField("Signature2", 10, 10, 50, 20, {
+    borderColor: [0, 0, 0],
+    backgroundColor: [1, 1, 1],
+    borderWidth: 1
+  });
 }
 
 function test_html() {

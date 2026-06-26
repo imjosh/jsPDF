@@ -1,7 +1,7 @@
 /** @license
  *
  * jsPDF - PDF Document creation from JavaScript
- * Version 2.5.2_mmo Built on 2025-02-11T19:20:15.868Z
+ * Version 2.5.2_mmo Built on 2026-06-26T18:30:37.092Z
  *                      CommitID 00000000
  *
  * Copyright (c) 2010-2021 James Hall <james@parall.ax>, https://github.com/MrRio/jsPDF
@@ -6726,6 +6726,58 @@
     child.prototype.constructor = child;
   };
 
+  function normalizePdfColor(color) {
+    if (!Array.isArray(color) || color.length === 0) {
+      return null;
+    }
+
+    return color.map(function (value) {
+      value = Number(value);
+
+      if (!Number.isFinite(value)) {
+        return 0;
+      }
+
+      return Math.max(0, Math.min(1, value));
+    });
+  }
+
+  function pdfFillColor(color) {
+    if (color.length === 1) {
+      return pdfNum(color[0]) + " g";
+    }
+
+    if (color.length === 3) {
+      return color.map(pdfNum).join(" ") + " rg";
+    }
+
+    if (color.length === 4) {
+      return color.map(pdfNum).join(" ") + " k";
+    }
+
+    return "1 g";
+  }
+
+  function pdfStrokeColor(color) {
+    if (color.length === 1) {
+      return pdfNum(color[0]) + " G";
+    }
+
+    if (color.length === 3) {
+      return color.map(pdfNum).join(" ") + " RG";
+    }
+
+    if (color.length === 4) {
+      return color.map(pdfNum).join(" ") + " K";
+    }
+
+    return "0 G";
+  }
+
+  function pdfNum(value) {
+    return Number(value).toFixed(4).replace(/\.?0+$/, "");
+  }
+
   var scale = function scale(x) {
     return x * scaleFactor;
   };
@@ -7210,46 +7262,45 @@
 
 
         if (fieldObject.appearanceStreamContent) {
-          var appearanceStreamString = ""; // Iterate over N,R and D
+          var appearanceStreamString = "";
+
+          var addXFormToAppearance = function addXFormToAppearance(obj) {
+            if (typeof obj === "function") {
+              // if Function is referenced, call it in order to
+              // get the FormXObject
+              obj = obj.call(scope, fieldObject);
+            }
+
+            if (!(scope.internal.acroformPlugin.xForms.indexOf(obj) >= 0)) {
+              scope.internal.acroformPlugin.xForms.push(obj);
+            }
+
+            return obj;
+          }; // Iterate over N,R and D
+
 
           for (var k in fieldObject.appearanceStreamContent) {
-            if (fieldObject.appearanceStreamContent.hasOwnProperty(k)) {
+            if (Object.prototype.hasOwnProperty.call(fieldObject.appearanceStreamContent, k)) {
               var value = fieldObject.appearanceStreamContent[k];
               appearanceStreamString += "/" + k + " ";
-              appearanceStreamString += "<<";
 
-              if (Object.keys(value).length >= 1 || Array.isArray(value)) {
-                // appearanceStream is an Array or Object!
-                for (var i in value) {
-                  if (value.hasOwnProperty(i)) {
-                    var obj = value[i];
+              if (typeof value === "function" || value instanceof AcroFormPDFObject) {
+                appearanceStreamString += addXFormToAppearance(value) + " ";
+              } else {
+                appearanceStreamString += "<<";
 
-                    if (typeof obj === "function") {
-                      // if Function is referenced, call it in order
-                      // to get the FormXObject
-                      obj = obj.call(scope, fieldObject);
+                if (Object.keys(value).length >= 1 || Array.isArray(value)) {
+                  // appearanceStream is an Array or Object!
+                  for (var state in value) {
+                    if (Object.prototype.hasOwnProperty.call(value, state)) {
+                      var obj = addXFormToAppearance(value[state]);
+                      appearanceStreamString += "/" + state + " " + obj + " ";
                     }
-
-                    appearanceStreamString += "/" + i + " " + obj + " "; // In case the XForm is already used, e.g. OffState
-                    // of CheckBoxes, don't add it
-
-                    if (!(scope.internal.acroformPlugin.xForms.indexOf(obj) >= 0)) scope.internal.acroformPlugin.xForms.push(obj);
                   }
                 }
-              } else {
-                obj = value;
 
-                if (typeof obj === "function") {
-                  // if Function is referenced, call it in order to
-                  // get the FormXObject
-                  obj = obj.call(scope, fieldObject);
-                }
-
-                appearanceStreamString += "/" + i + " " + obj;
-                if (!(scope.internal.acroformPlugin.xForms.indexOf(obj) >= 0)) scope.internal.acroformPlugin.xForms.push(obj);
+                appearanceStreamString += ">>";
               }
-
-              appearanceStreamString += ">>";
             }
           } // appearance stream is a normal Object..
 
@@ -7572,6 +7623,17 @@
       configurable: false,
       get: function get() {
         return _Kids;
+      }
+    });
+    var _SigFlags = 0;
+    Object.defineProperty(this, "SigFlags", {
+      enumerable: true,
+      configurable: false,
+      get: function get() {
+        return _SigFlags || undefined;
+      },
+      set: function set(value) {
+        _SigFlags = value;
       }
     }); // Default Appearance
 
@@ -7945,7 +8007,7 @@
       enumerable: true,
       configurable: false,
       get: function get() {
-        if (!_DA || this instanceof AcroFormChildClass || this instanceof AcroFormTextField) {
+        if (!_DA || this instanceof AcroFormChildClass || this instanceof AcroFormTextField || this instanceof AcroFormSignatureField) {
           return undefined;
         }
 
@@ -8310,6 +8372,10 @@
       configurable: false,
       get: function get() {
         if (!Object.keys(_MK).length) {
+          if (this instanceof AcroFormSignatureField) {
+            return "<<>>";
+          }
+
           return undefined;
         }
 
@@ -9369,9 +9435,62 @@
     this.password = true;
   };
 
-  inherit(AcroFormPasswordField, AcroFormTextField); // Contains Methods for creating standard appearances
+  inherit(AcroFormPasswordField, AcroFormTextField);
+  /**
+   * @class AcroFormSignatureField
+   * @extends AcroFormField
+   */
+
+  var AcroFormSignatureField = function AcroFormSignatureField() {
+    AcroFormField.call(this);
+    this.FT = "/Sig";
+    this.hasAppearanceStream = true;
+    this.appearanceStreamContent = AcroFormAppearance.Signature.createAppearanceStream();
+  };
+
+  inherit(AcroFormSignatureField, AcroFormField); // Contains Methods for creating standard appearances
 
   var AcroFormAppearance = {
+    Signature: {
+      createAppearanceStream: function createAppearanceStream() {
+        return {
+          N: AcroFormAppearance.Signature.DSBlank
+        };
+      },
+      DSBlank: function DSBlank(formObject) {
+        var xobj = new AcroFormXObject();
+        var width = formObject.width;
+        var height = formObject.height;
+        var borderWidth = formObject.borderWidth;
+        var backgroundColor = normalizePdfColor(formObject.backgroundColor);
+        var borderColor = normalizePdfColor(formObject.borderColor);
+        var stream = [];
+        xobj.scope = formObject.scope;
+        xobj.BBox = [0, 0, width, height];
+        xobj.Resources = "<<>>";
+        stream.push("q");
+
+        if (backgroundColor) {
+          stream.push(pdfFillColor(backgroundColor));
+          stream.push("0 0 " + pdfNum(width) + " " + pdfNum(height) + " re");
+          stream.push("f");
+        }
+
+        if (borderWidth > 0 && borderColor) {
+          var inset = borderWidth / 2;
+          var strokeWidth = width - borderWidth;
+          var strokeHeight = height - borderWidth;
+          stream.push(pdfStrokeColor(borderColor));
+          stream.push(pdfNum(borderWidth) + " w");
+          stream.push(pdfNum(inset) + " " + pdfNum(inset) + " " + pdfNum(strokeWidth) + " " + pdfNum(strokeHeight) + " re");
+          stream.push("S");
+        }
+
+        stream.push("Q");
+        xobj.stream = stream.join("\n");
+        return xobj;
+      }
+    },
     CheckBox: {
       createAppearanceStream: function createAppearanceStream() {
         var appearance = {
@@ -9908,7 +10027,49 @@
 
     fieldObject.scope = this;
     fieldObject.page = this.internal.getCurrentPageInfo().pageNumber;
+
+    if (fieldObject.FT === "/Sig") {
+      this.internal.acroformPlugin.acroFormDictionaryRoot.SigFlags = 1;
+    }
+
     putForm(fieldObject);
+    return this;
+  };
+  /**
+   * Add a blank signature field to the jsPDF-instance.
+   *
+   * @name addSignatureField
+   * @function
+   * @instance
+   * @param {string} name
+   * @param {number} x
+   * @param {number} y
+   * @param {number} width
+   * @param {number} height
+   * @param {Object} [options]
+   * @returns {jsPDF}
+   */
+
+
+  jsPDFAPI.addSignatureField = function (name, x, y, width, height, options) {
+    options = options || {};
+    var field = new AcroFormSignatureField();
+    field.fieldName = name;
+    field.Rect = [x, y, width, height];
+
+    if (options.borderColor) {
+      field.borderColor = options.borderColor;
+    }
+
+    if (options.backgroundColor) {
+      field.backgroundColor = options.backgroundColor;
+    }
+
+    if (options.borderWidth !== undefined) {
+      field.borderWidth = options.borderWidth;
+    }
+
+    this.addField(field);
     return this;
   };
 
@@ -9923,7 +10084,9 @@
   jsPDFAPI.AcroFormTextField = AcroFormTextField;
   jsPDFAPI.AcroFormTextFieldGroup = AcroFormTextFieldGroup;
   jsPDFAPI.AcroFormPasswordField = AcroFormPasswordField;
+  jsPDFAPI.AcroFormSignatureField = AcroFormSignatureField;
   jsPDFAPI.AcroFormAppearance = AcroFormAppearance;
+  jsPDF.AcroFormSignatureField = AcroFormSignatureField;
   jsPDFAPI.AcroForm = {
     ChoiceField: AcroFormChoiceField,
     ListBox: AcroFormListBox,
@@ -9936,6 +10099,7 @@
     TextField: AcroFormTextField,
     TextFieldGroup: AcroFormTextFieldGroup,
     PasswordField: AcroFormPasswordField,
+    SignatureField: AcroFormSignatureField,
     Appearance: AcroFormAppearance
   };
   jsPDF.AcroForm = {
@@ -9950,6 +10114,7 @@
     TextField: AcroFormTextField,
     TextFieldGroup: AcroFormTextFieldGroup,
     PasswordField: AcroFormPasswordField,
+    SignatureField: AcroFormSignatureField,
     Appearance: AcroFormAppearance
   };
   var AcroForm = jsPDF.AcroForm;
@@ -29297,6 +29462,7 @@
   exports.AcroFormPasswordField = AcroFormPasswordField;
   exports.AcroFormPushButton = AcroFormPushButton;
   exports.AcroFormRadioButton = AcroFormRadioButton;
+  exports.AcroFormSignatureField = AcroFormSignatureField;
   exports.AcroFormTextField = AcroFormTextField;
   exports.AcroFormTextFieldGroup = AcroFormTextFieldGroup;
   exports.GState = GState;

@@ -18,6 +18,7 @@ global.loadGlobals = function() {
   global.TextField = jsPDF.AcroFormTextField;
   global.TextFieldGroup = jsPDF.AcroFormTextFieldGroup;
   global.PasswordField = jsPDF.AcroFormPasswordField;
+  global.SignatureField = jsPDF.AcroFormSignatureField;
   global.Appearance = jsPDF.AcroFormAppearance;
 };
 

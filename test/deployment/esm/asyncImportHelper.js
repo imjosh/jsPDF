@@ -12,6 +12,7 @@ import {
   AcroFormTextField,
   AcroFormTextFieldGroup,
   AcroFormPasswordField,
+  AcroFormSignatureField,
   AcroFormAppearance
 } from "../../../dist/jspdf.es.js";
 
@@ -29,5 +30,6 @@ window.importsReady({
   AcroFormTextField,
   AcroFormTextFieldGroup,
   AcroFormPasswordField,
+  AcroFormSignatureField,
   AcroFormAppearance
 });

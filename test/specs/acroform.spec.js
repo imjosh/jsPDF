@@ -1,9 +1,51 @@
 /* eslint-disable no-self-assign */
-/* global describe, it, expect, jsPDF, comparePdf, Button, ComboBox, ChoiceField, EditBox, ListBox, PushButton, CheckBox, TextField, TextFieldGroup, PasswordField, RadioButton, AcroForm */
+/* global describe, it, expect, jasmine, jsPDF, comparePdf, Button, ComboBox, ChoiceField, EditBox, ListBox, PushButton, CheckBox, TextField, TextFieldGroup, PasswordField, SignatureField, RadioButton, AcroForm */
 
 /**
  * Acroform testing
  */
+var getPdfObjectByRef = function(pdf, ref) {
+  var objectNumber = ref.split(" ")[0];
+  var objectMatch = new RegExp(
+    "\\n" + objectNumber + " 0 obj\\s*([\\s\\S]*?)\\s*endobj"
+  ).exec(pdf);
+  return objectMatch ? objectMatch[1] : "";
+};
+
+var getSignatureFieldObject = function(pdf, fieldName) {
+  var objectRegex = /\n(\d+) 0 obj\s*([\s\S]*?)\nendobj/g;
+  var objectMatch;
+
+  while ((objectMatch = objectRegex.exec(pdf))) {
+    if (
+      objectMatch[2].indexOf("/FT /Sig") !== -1 &&
+      objectMatch[2].indexOf("/T (" + fieldName + ")") !== -1
+    ) {
+      return {
+        ref: objectMatch[1] + " 0 R",
+        content: objectMatch[2]
+      };
+    }
+  }
+
+  return null;
+};
+
+var expectPageAnnotsToContainRef = function(pdf, ref) {
+  var directAnnots = new RegExp(
+    "/Annots\\s*\\[[\\s\\S]*?" + ref + "[\\s\\S]*?\\]"
+  );
+
+  if (directAnnots.test(pdf)) {
+    expect(true).toEqual(true);
+    return;
+  }
+
+  var indirectAnnots = /\/Annots\s+(\d+ 0 R)/.exec(pdf);
+  var annotsObject = indirectAnnots ? getPdfObjectByRef(pdf, indirectAnnots[1]) : "";
+  expect(annotsObject).toContain(ref);
+};
+
 describe("Module: Acroform Unit Test", function() {
   beforeAll(loadGlobals);
   it("setBit", function() {
@@ -661,6 +703,20 @@ describe("Module: Acroform Unit Test", function() {
     expect(field.textAlign).toEqual("center");
   });
 
+  it("AcroFormSignatureField", function() {
+    var field = new SignatureField();
+    var doc = new jsPDF();
+
+    expect(field.FT).toEqual("/Sig");
+    expect(field.hasAppearanceStream).toEqual(true);
+    expect(field.appearanceStreamContent.N).toEqual(
+      AcroForm.Appearance.Signature.DSBlank
+    );
+    expect(new jsPDF.AcroFormSignatureField().FT).toEqual("/Sig");
+    expect(new jsPDF.AcroForm.SignatureField().FT).toEqual("/Sig");
+    expect(new doc.AcroFormSignatureField().FT).toEqual("/Sig");
+  });
+
   it("AcroFormField fontName, fontStyle", function() {
     var field = new TextField();
 
@@ -728,6 +784,9 @@ describe("Module: Acroform Unit Test", function() {
       doc.addField(new PasswordField());
     }).not.toThrow(new Error("Invalid argument passed to jsPDF.addField."));
     expect(function() {
+      doc.addField(new SignatureField());
+    }).not.toThrow(new Error("Invalid argument passed to jsPDF.addField."));
+    expect(function() {
       doc.addField(new Button());
     }).not.toThrow(new Error("Invalid argument passed to jsPDF.addField."));
     expect(function() {
@@ -739,6 +798,20 @@ describe("Module: Acroform Unit Test", function() {
     expect(function() {
       doc.addField(new Object());
     }).toThrow(new Error("Invalid argument passed to jsPDF.addField."));
+  });
+
+  it("addSignatureField", function() {
+    var doc = new jsPDF({
+      orientation: "p",
+      unit: "mm",
+      format: "a4",
+      floatPrecision: 2
+    });
+
+    expect(doc.addSignatureField).toEqual(jasmine.any(Function));
+    expect(function() {
+      doc.addSignatureField("Signature1", 10, 10, 50, 20);
+    }).not.toThrow();
   });
 
   it("addButton", function() {
@@ -1239,6 +1312,96 @@ describe("Module: Acroform Integration Test", function() {
     comparePdf(doc.output(), "radiogroup2.pdf", "acroform");
   });
 
+  it("should add a SignatureField", function() {
+    var doc = new jsPDF({
+      unit: "pt",
+      format: "letter",
+      floatPrecision: 2
+    });
+
+    doc.addSignatureField("Signature1", 28.38, 31.53, 150, 32);
+
+    var pdf = doc.output();
+    var signatureField = getSignatureFieldObject(pdf, "Signature1");
+
+    expect(signatureField).not.toEqual(null);
+    if (!signatureField) return;
+
+    expect(pdf).toContain("/SigFlags 1");
+    expect(signatureField.content).toContain("/FT /Sig");
+    expect(signatureField.content).toContain("/T (Signature1)");
+    expect(signatureField.content).toContain("/Type /Annot");
+    expect(signatureField.content).toContain("/Subtype /Widget");
+    expect(signatureField.content).toContain("/F 4");
+    expect(signatureField.content).toContain("/MK <<>>");
+    expect(signatureField.content).toMatch(/\/AP\s*<<\s*\/N\s+\d+ 0 R\s*>>/);
+    expect(pdf).toContain("/Type /XObject");
+    expect(pdf).toContain("/Subtype /Form");
+    expect(pdf).toContain("/BBox [0 0 100 100]");
+    expect(pdf).toContain("/Resources <<>>");
+    expect(pdf).toContain("% DSBlank");
+    expectPageAnnotsToContainRef(pdf, signatureField.ref);
+  });
+
+  it("should add multiple SignatureFields", function() {
+    var doc = new jsPDF({
+      unit: "pt",
+      format: "letter",
+      floatPrecision: 2
+    });
+
+    doc.addSignatureField("Signature1", 28.38, 31.53, 150, 32);
+    doc.addSignatureField("Signature2", 28.38, 80, 150, 32);
+
+    var pdf = doc.output();
+    var signatureFields = pdf.match(/\/FT \/Sig/g) || [];
+
+    expect(signatureFields.length).toEqual(2);
+    expect(getSignatureFieldObject(pdf, "Signature1")).not.toEqual(null);
+    expect(getSignatureFieldObject(pdf, "Signature2")).not.toEqual(null);
+    expect(pdf).toContain("/SigFlags 1");
+  });
+
+  it("should add SignatureFields with other AcroForm fields", function() {
+    var doc = new jsPDF({
+      unit: "pt",
+      format: "letter",
+      floatPrecision: 2
+    });
+
+    var textField = new TextField();
+    textField.fieldName = "Text1";
+    textField.Rect = [28.38, 31.53, 150, 32];
+    doc.addField(textField);
+
+    var checkBox = new CheckBox();
+    checkBox.fieldName = "CheckBox1";
+    checkBox.Rect = [28.38, 80, 20, 20];
+    doc.addField(checkBox);
+
+    var radioGroup = new RadioButton();
+    radioGroup.fieldName = "RadioGroup1";
+    radioGroup.V = "/Radio1";
+    doc.addField(radioGroup);
+    var radioButton = radioGroup.createOption("Radio1");
+    radioButton.Rect = [28.38, 120, 20, 20];
+    radioButton.AS = "/Radio1";
+
+    doc.addSignatureField("Signature1", 28.38, 160, 150, 32);
+
+    var pdf = doc.output();
+    var signatureField = getSignatureFieldObject(pdf, "Signature1");
+
+    expect(signatureField).not.toEqual(null);
+    if (!signatureField) return;
+
+    expect(pdf).toContain("/FT /Sig");
+    expect(pdf).toContain("/FT /Tx");
+    expect(pdf).toContain("/FT /Btn");
+    expect(pdf).toContain("/SigFlags 1");
+    expectPageAnnotsToContainRef(pdf, signatureField.ref);
+  });
+
   //fix for issue #1783
   it("acroform and annotations", function() {
     var doc = jsPDF({ floatPrecision: 2 });
@@ -1276,7 +1439,10 @@ describe("Module: Acroform Integration Test", function() {
     expect(jsPDF.API.AcroForm.PasswordField);
     expect(jsPDF.API.AcroForm.PushButton);
     expect(jsPDF.API.AcroForm.RadioButton);
+    expect(jsPDF.API.AcroForm.SignatureField);
     expect(jsPDF.API.AcroForm.TextField);
+    expect(jsPDF.AcroFormSignatureField);
+    expect(jsPDF.AcroForm.SignatureField);
     expect(jsPDF.API.AcroFormAppearance);
     expect(jsPDF.API.AcroFormCheckBox);
     expect(jsPDF.API.AcroFormButton);
@@ -1287,6 +1453,8 @@ describe("Module: Acroform Integration Test", function() {
     expect(jsPDF.API.AcroFormPasswordField);
     expect(jsPDF.API.AcroFormPushButton);
     expect(jsPDF.API.AcroFormRadioButton);
+    expect(jsPDF.API.AcroFormSignatureField);
     expect(jsPDF.API.AcroFormTextField);
+    expect(jsPDF.API.addSignatureField);
   });
 });
