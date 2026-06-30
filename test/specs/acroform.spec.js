@@ -934,6 +934,77 @@ describe("Module: Acroform Unit Test", function() {
     expect(textField.BS).toEqual(undefined);
   });
 
+  it("AcroFormField border defaults when borderColor is set", function() {
+    const textField = new TextField();
+
+    textField.borderColor = [0, 0, 0];
+    expect(textField._BS).toEqual({
+      borderWidth: 1,
+      borderStyle: "solid"
+    });
+    expect(textField.BS).toEqual("<<\n/S /l\n/W 1\n>>");
+    expect(textField.borderWidth).toEqual(1);
+    expect(textField.borderStyle).toEqual("solid");
+
+    textField.borderWidth = 2;
+    expect(textField.borderWidth).toEqual(2);
+    expect(textField._BS.borderWidth).toEqual(2);
+    expect(textField.BS).toEqual("<<\n/S /l\n/W 2\n>>");
+  });
+
+  it("AcroFormField borderWidth 0 is not overridden by borderColor", function() {
+    const textField = new TextField();
+
+    textField.borderWidth = 0;
+    textField.borderColor = [0];
+    expect(textField._BS.borderWidth).toEqual(0);
+    expect(textField.borderWidth).toEqual(0);
+    expect(textField.BS).toEqual("<<\n/S /l\n>>");
+
+    const signatureField = new SignatureField();
+    signatureField.Rect = [0, 0, 100, 50];
+    signatureField.borderWidth = 0;
+    signatureField.borderColor = [0, 0, 0];
+
+    const xobj = AcroForm.Appearance.Signature.DSBlank(signatureField);
+    expect(xobj.stream).not.toContain("1 w");
+    expect(xobj.stream).not.toContain(" RG");
+  });
+
+  it("AcroFormSignatureField draws border when only borderColor is set", function() {
+    const signatureField = new SignatureField();
+    signatureField.Rect = [0, 0, 100, 50];
+    signatureField.borderColor = [0, 0, 0];
+
+    expect(signatureField.BS).toEqual("<<\n/S /l\n/W 1\n>>");
+
+    const xobj = AcroForm.Appearance.Signature.DSBlank(signatureField);
+    expect(xobj.stream).toContain("0.00000 0.00000 0.00000 RG");
+    expect(xobj.stream).toContain("1.00000 w");
+    expect(xobj.stream).toMatch(/\nS\n/);
+
+    const doc = new jsPDF({
+      unit: "pt",
+      format: "letter",
+      floatPrecision: 2
+    });
+    doc.addSignatureField("SigBorder", 28.38, 31.53, 150, 32, {
+      borderColor: [0, 0, 0]
+    });
+
+    const pdf = doc.output();
+    const signatureFieldObj = getSignatureFieldObject(pdf, "SigBorder");
+
+    expect(signatureFieldObj).not.toEqual(null);
+    if (!signatureFieldObj) return;
+
+    expect(signatureFieldObj.content).toContain("/BS");
+    expect(signatureFieldObj.content).toContain("/W 1");
+    expect(signatureFieldObj.content).toContain("/S /l");
+    expect(pdf).toContain("0.00000 0.00000 0.00000 RG");
+    expect(pdf).toContain("1.00000 w");
+  });
+
   it("Textfield group: AcroFormTextFieldGroup, AcroFormTextFieldChild", function() {
     const textFieldGroup = new TextFieldGroup();
     textFieldGroup.fieldName = "LastName";
@@ -1337,9 +1408,8 @@ describe("Module: Acroform Integration Test", function() {
     expect(signatureField.content).toMatch(/\/AP\s*<<\s*\/N\s+\d+ 0 R\s*>>/);
     expect(pdf).toContain("/Type /XObject");
     expect(pdf).toContain("/Subtype /Form");
-    expect(pdf).toContain("/BBox [0 0 100 100]");
+    expect(pdf).toContain("/BBox [0 0 150 32]");
     expect(pdf).toContain("/Resources <<>>");
-    expect(pdf).toContain("% DSBlank");
     expectPageAnnotsToContainRef(pdf, signatureField.ref);
   });
 

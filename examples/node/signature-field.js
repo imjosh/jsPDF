@@ -6,6 +6,7 @@
  *
  * Open examples/node/signature-field.pdf in Acrobat Reader to verify the field is signable.
  */
+// fixme test
 const fs = require("fs");
 const path = require("path");
 const { jsPDF } = require("../../dist/jspdf.node.min");

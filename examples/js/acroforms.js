@@ -170,44 +170,13 @@ function addTextFieldGroup() {
   yPos += margin;
 }
 
-function addSignatureField(fallbackText = "") {
+function addSignatureField() {
   doc.text("Signature:", 10, yPos);
   var signatureField = new SignatureField();
   signatureField.fieldName = "Signature1";
   signatureField.Rect = [50, yPos - 5, 50, 15];
   signatureField.borderColor = [0];
-  signatureField.borderStyle = "solid";
-  signatureField.borderWidth = 1;
-
-  if (fallbackText) {
-    signatureField.backgroundColor = [1, 1, 1]; // white
-    drawFallbackText(doc, fallbackText, 50, yPos - 5, 50, 15);
-    drawFieldBackgroundGuide(doc, 50, yPos - 5, 50, 15);
-  }
 
   doc.addField(signatureField);
   yPos += margin;
-}
-
-function drawFallbackText(doc, fallbackText, x, y, width, height) {
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
-  doc.setTextColor(75, 75, 75);
-
-  const lines = doc.splitTextToSize(fallbackText, width - 16);
-  const lineHeight = 11;
-  const totalHeight = lines.length * lineHeight;
-  const firstLineY = y + height / 2 - totalHeight / 2 + 9;
-
-  doc.text(lines, x + 8, firstLineY);
-  doc.setTextColor(0, 0, 0);
-  doc.setFont("helvetica", "normal");
-}
-
-function drawFieldBackgroundGuide(doc, x, y, width, height) {
-  doc.setDrawColor(180, 180, 180);
-  doc.setLineDashPattern([3, 2], 0);
-  doc.rect(x + 0.5, y + 0.5, width - 1, height - 1);
-  doc.setLineDashPattern([], 0);
-  doc.setDrawColor(0, 0, 0);
 }

@@ -39,6 +39,79 @@ var f5 = function(number) {
   return number.toFixed(5); // Ie, %.2f
 };
 
+function normalizePdfColor(color) {
+  if (!Array.isArray(color) || color.length === 0) {
+    return null;
+  }
+
+  return color.map(function(value) {
+    value = Number(value);
+    if (!Number.isFinite(value)) {
+      return 0;
+    }
+
+    return Math.max(0, Math.min(1, value));
+  });
+}
+
+function hasBorderColor(formObject) {
+  return normalizePdfColor(formObject._MK && formObject._MK.BC) != null;
+}
+
+function resolveBorderWidth(formObject) {
+  var width = formObject._BS && formObject._BS.borderWidth;
+  if (width != null) {
+    return width;
+  }
+  if (hasBorderColor(formObject)) {
+    return 1;
+  }
+  return undefined;
+}
+
+function resolveBorderStyle(formObject) {
+  var style = formObject._BS && formObject._BS.borderStyle;
+  if (style != null) {
+    return style;
+  }
+  if (hasBorderColor(formObject)) {
+    return "solid";
+  }
+  return undefined;
+}
+
+function pdfFillColor(color) {
+  if (color.length === 1) {
+    return f5(color[0]) + " g";
+  }
+
+  if (color.length === 3) {
+    return color.map(f5).join(" ") + " rg";
+  }
+
+  if (color.length === 4) {
+    return color.map(f5).join(" ") + " k";
+  }
+
+  return "1 g";
+}
+
+function pdfStrokeColor(color) {
+  if (color.length === 1) {
+    return f5(color[0]) + " G";
+  }
+
+  if (color.length === 3) {
+    return color.map(f5).join(" ") + " RG";
+  }
+
+  if (color.length === 4) {
+    return color.map(f5).join(" ") + " K";
+  }
+
+  return "0 G";
+}
+
 jsPDFAPI.__acroform__ = {};
 var inherit = function(child, parent) {
   child.prototype = Object.create(parent.prototype);
@@ -1775,6 +1848,12 @@ var AcroFormField = function() {
         return;
       }
       _MK.BC = value;
+      if (_BS.borderWidth == null) {
+        _BS.borderWidth = 1;
+      }
+      if (_BS.borderStyle == null) {
+        _BS.borderStyle = "solid";
+      }
     }
   });
 
@@ -1819,7 +1898,10 @@ var AcroFormField = function() {
     enumerable: true,
     configurable: false,
     get: function get() {
-      if (!Object.keys(_BS).length) {
+      var borderWidth = resolveBorderWidth(this);
+      var borderStyle = resolveBorderStyle(this);
+
+      if (borderWidth == null && borderStyle == null) {
         return undefined;
       }
 
@@ -1834,12 +1916,12 @@ var AcroFormField = function() {
       var result = [];
       result.push("<<");
 
-      if (borderStyles[_BS.borderStyle]) {
-        result.push(`/S ${borderStyles[_BS.borderStyle]}`);
+      if (borderStyle && borderStyles[borderStyle]) {
+        result.push(`/S ${borderStyles[borderStyle]}`);
       }
 
-      if (_BS.borderWidth) {
-        result.push(`/W ${_BS.borderWidth}`);
+      if (borderWidth) {
+        result.push(`/W ${borderWidth}`);
       }
 
       result.push(">>");
@@ -1868,7 +1950,7 @@ var AcroFormField = function() {
     enumerable: true,
     configurable: true,
     get: function get() {
-      return _BS.borderStyle;
+      return resolveBorderStyle(this);
     },
     set: function set(value) {
       _BS.borderStyle = value;
@@ -1886,7 +1968,7 @@ var AcroFormField = function() {
     enumerable: true,
     configurable: true,
     get: function get() {
-      return _BS.borderWidth;
+      return resolveBorderWidth(this);
     },
     set: function set(value) {
       _BS.borderWidth = value;
@@ -2806,10 +2888,45 @@ var AcroFormAppearance = {
 
     DSBlank: function(formObject) {
       var xobj = new AcroFormXObject();
+      var width = formObject.width;
+      var height = formObject.height;
+      var borderWidth = resolveBorderWidth(formObject);
+      var backgroundColor = normalizePdfColor(formObject.backgroundColor);
+      var borderColor = normalizePdfColor(formObject.borderColor);
+
+      var stream = [];
+
       xobj.scope = formObject.scope;
-      xobj.BBox = [0, 0, 100, 100];
+      xobj.BBox = [0, 0, width, height];
       xobj.Resources = "<<>>";
-      xobj.stream = "% DSBlank";
+
+      stream.push("q");
+
+      if (backgroundColor) {
+        stream.push(pdfFillColor(backgroundColor));
+        stream.push("0 0 " + f5(width) + " " + f5(height) + " re");
+        stream.push("f");
+      }
+
+      if (borderWidth > 0 && borderColor) {
+        var inset = borderWidth / 2;
+        var strokeWidth = width - borderWidth;
+        var strokeHeight = height - borderWidth;
+
+        stream.push(pdfStrokeColor(borderColor));
+        stream.push(f5(borderWidth) + " w");
+        stream.push(
+          f5(inset) + " " +
+          f5(inset) + " " +
+          f5(strokeWidth) + " " +
+          f5(strokeHeight) + " re"
+        );
+        stream.push("S");
+      }
+
+      stream.push("Q");
+
+      xobj.stream = stream.join("\n");
       return xobj;
     }
   },
