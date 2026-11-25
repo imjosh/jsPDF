@@ -913,7 +913,7 @@ describe("Module: Acroform Unit Test", function() {
     textField.borderStyle = "dashed";
     expect(textField.BS).toEqual("<<\n/S /D\n>>");
     textField.borderStyle = "solid";
-    expect(textField.BS).toEqual("<<\n/S /l\n>>");
+    expect(textField.BS).toEqual("<<\n/S /S\n>>");
     textField.borderStyle = "beveled";
     expect(textField.BS).toEqual("<<\n/S /B\n>>");
     textField.borderStyle = "inset";
@@ -942,14 +942,14 @@ describe("Module: Acroform Unit Test", function() {
       borderWidth: 1,
       borderStyle: "solid"
     });
-    expect(textField.BS).toEqual("<<\n/S /l\n/W 1\n>>");
+    expect(textField.BS).toEqual("<<\n/S /S\n/W 1\n>>");
     expect(textField.borderWidth).toEqual(1);
     expect(textField.borderStyle).toEqual("solid");
 
     textField.borderWidth = 2;
     expect(textField.borderWidth).toEqual(2);
     expect(textField._BS.borderWidth).toEqual(2);
-    expect(textField.BS).toEqual("<<\n/S /l\n/W 2\n>>");
+    expect(textField.BS).toEqual("<<\n/S /S\n/W 2\n>>");
   });
 
   it("AcroFormField borderWidth 0 is not overridden by borderColor", function() {
@@ -959,7 +959,7 @@ describe("Module: Acroform Unit Test", function() {
     textField.borderColor = [0];
     expect(textField._BS.borderWidth).toEqual(0);
     expect(textField.borderWidth).toEqual(0);
-    expect(textField.BS).toEqual("<<\n/S /l\n>>");
+    expect(textField.BS).toEqual("<<\n/S /S\n>>");
 
     const signatureField = new SignatureField();
     signatureField.Rect = [0, 0, 100, 50];
@@ -976,7 +976,7 @@ describe("Module: Acroform Unit Test", function() {
     signatureField.Rect = [0, 0, 100, 50];
     signatureField.borderColor = [0, 0, 0];
 
-    expect(signatureField.BS).toEqual("<<\n/S /l\n/W 1\n>>");
+    expect(signatureField.BS).toEqual("<<\n/S /S\n/W 1\n>>");
 
     const xobj = AcroForm.Appearance.Signature.DSBlank(signatureField);
     expect(xobj.stream).toContain("0.00000 0.00000 0.00000 RG");
@@ -1000,7 +1000,7 @@ describe("Module: Acroform Unit Test", function() {
 
     expect(signatureFieldObj.content).toContain("/BS");
     expect(signatureFieldObj.content).toContain("/W 1");
-    expect(signatureFieldObj.content).toContain("/S /l");
+    expect(signatureFieldObj.content).toContain("/S /S");
     expect(pdf).toContain("0.00000 0.00000 0.00000 RG");
     expect(pdf).toContain("1.00000 w");
   });

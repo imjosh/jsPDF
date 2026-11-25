@@ -1907,7 +1907,7 @@ var AcroFormField = function() {
 
       var borderStyles = {
         dashed: "/D",
-        solid: "/l", // lowercase L
+        solid: "/S",
         beveled: "/B",
         inset: "/I",
         underline: "/U"
