@@ -21,7 +21,8 @@ var pdfEscape = function(value) {
   return value
     .replace(/\\/g, "\\\\")
     .replace(/\(/g, "\\(")
-    .replace(/\)/g, "\\)");
+    .replace(/\)/g, "\\)")
+    .replace(/\r/g, "\\r");
 };
 
 var pdfUnescape = function(value) {

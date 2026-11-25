@@ -164,6 +164,19 @@ describe("Module: Acroform Unit Test", function() {
     expect(jsPDF.API.__acroform__.clearBitForPdf(4, 3)).toEqual(0);
   });
 
+  it("escapes carriage returns in field strings", function() {
+    // An unescaped CR inside a literal string is read as LF (PDF 32000-1 7.3.4.2),
+    // which corrupts encrypted field names whose ciphertext contains 0x0D.
+    var doc = new jsPDF();
+    var textField = new jsPDF.AcroForm.TextField();
+    textField.fieldName = "Field\rName";
+    textField.Rect = [10, 10, 40, 10];
+    doc.addField(textField);
+    var output = doc.output();
+    expect(output).toContain("/T (Field\\rName)");
+    expect(output).not.toContain("/T (Field\rName)");
+  });
+
   it("AcroFormField Rect, x, y, width, height", function() {
     var doc = new jsPDF("p", "pt", "a4");
     var textFieldRect = new TextField();

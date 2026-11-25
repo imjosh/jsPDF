@@ -432,6 +432,10 @@ describe("Core: Unit Tests", () => {
     expect(doc.__private__.pdfEscape("(Test)")).toEqual("\\(Test\\)");
     expect(doc.__private__.pdfEscape("\\Test")).toEqual("\\\\Test");
     expect(doc.__private__.pdfEscape("\\(Test")).toEqual("\\\\\\(Test");
+    // An unescaped CR inside a literal string is read as LF (PDF 32000-1 7.3.4.2),
+    // which corrupts encrypted strings whose ciphertext contains 0x0D.
+    expect(doc.__private__.pdfEscape("Te\rst")).toEqual("Te\\rst");
+    expect(doc.__private__.pdfEscape("Te\r\nst")).toEqual("Te\\r\nst");
 
     doc.__private__.resetCustomOutputDestination();
   });

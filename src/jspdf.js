@@ -2681,7 +2681,8 @@ function jsPDF(options) {
     return to8bitStream(text, flags)
       .replace(/\\/g, "\\\\")
       .replace(/\(/g, "\\(")
-      .replace(/\)/g, "\\)");
+      .replace(/\)/g, "\\)")
+      .replace(/\r/g, "\\r");
   });
 
   var beginPage = (API.__private__.beginPage = function(format) {
