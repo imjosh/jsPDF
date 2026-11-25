@@ -1,7 +1,7 @@
 /** @license
  *
  * jsPDF - PDF Document creation from JavaScript
- * Version 2.5.2_mmo Built on 2026-11-25T00:08:40.995Z
+ * Version 2.5.2_mmo Built on 2026-11-25T00:41:04.678Z
  *                      CommitID 00000000
  *
  * Copyright (c) 2010-2021 James Hall <james@parall.ax>, https://github.com/MrRio/jsPDF
@@ -3501,7 +3501,8 @@ function jsPDF(options) {
     return to8bitStream(text, flags)
       .replace(/\\/g, "\\\\")
       .replace(/\(/g, "\\(")
-      .replace(/\)/g, "\\)");
+      .replace(/\)/g, "\\)")
+      .replace(/\r/g, "\\r");
   });
 
   var beginPage = (API.__private__.beginPage = function(format) {
@@ -6902,7 +6903,8 @@ var pdfEscape = function(value) {
   return value
     .replace(/\\/g, "\\\\")
     .replace(/\(/g, "\\(")
-    .replace(/\)/g, "\\)");
+    .replace(/\)/g, "\\)")
+    .replace(/\r/g, "\\r");
 };
 
 var pdfUnescape = function(value) {

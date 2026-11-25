@@ -1,7 +1,7 @@
 /** @license
  *
  * jsPDF - PDF Document creation from JavaScript
- * Version 2.5.2_mmo Built on 2026-11-25T00:08:40.995Z
+ * Version 2.5.2_mmo Built on 2026-11-25T00:41:04.678Z
  *                      CommitID 00000000
  *
  * Copyright (c) 2010-2021 James Hall <james@parall.ax>, https://github.com/MrRio/jsPDF
@@ -3472,7 +3472,7 @@ function jsPDF(options) {
      * is still parseable.
      * This will allow immediate support for unicode in document properties strings.
      */
-    return to8bitStream(text, flags).replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+    return to8bitStream(text, flags).replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)").replace(/\r/g, "\\r");
   };
 
   var beginPage = API.__private__.beginPage = function (format) {
@@ -6685,7 +6685,7 @@ var jsPDFAPI = jsPDF.API;
 var scaleFactor = 1;
 
 var pdfEscape = function pdfEscape(value) {
-  return value.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+  return value.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)").replace(/\r/g, "\\r");
 };
 
 var pdfUnescape = function pdfUnescape(value) {
