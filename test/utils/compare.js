@@ -82,6 +82,10 @@ function resetFile(pdfFile) {
   pdfFile = pdfFile.replace(/\/Producer \([^)]+\)/, "/Producer (jsPDF 0.0.0)");
   return pdfFile;
 }
+
+function isEncrypted(pdfFile) {
+  return /\/Encrypt \d+ 0 R/.test(pdfFile);
+}
 /**
  * Find a better way to set this
  * @type {Boolean}
@@ -95,10 +99,14 @@ globalVar.comparePdf = function(actual, expectedFile, suite) {
     }
   } catch (error) {
     fail(error.message);
-    globalVar.sendReference(
-      "/test/reference/" + expectedFile,
-      resetFile(actual.replace(/^\s+|\s+$/g, ""))
-    );
+    actual = actual.replace(/^\s+|\s+$/g, "");
+    // Encrypted PDFs must be stored untouched: the file key is derived from
+    // /ID, and /Producer and /CreationDate are encrypted strings, so
+    // resetFile() would make the reference undecryptable.
+    if (!isEncrypted(actual)) {
+      actual = resetFile(actual);
+    }
+    globalVar.sendReference("/test/reference/" + expectedFile, actual);
     return;
   }
   var expected = resetFile(pdf.replace(/^\s+|\s+$/g, ""));
