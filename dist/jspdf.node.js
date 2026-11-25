@@ -1,7 +1,7 @@
 /** @license
  *
  * jsPDF - PDF Document creation from JavaScript
- * Version 2.5.2_mmo Built on 2026-06-26T20:19:44.664Z
+ * Version 2.5.2_mmo Built on 2026-11-25T00:08:40.995Z
  *                      CommitID 00000000
  *
  * Copyright (c) 2010-2021 James Hall <james@parall.ax>, https://github.com/MrRio/jsPDF
@@ -8788,7 +8788,7 @@ var AcroFormField = function() {
 
       var borderStyles = {
         dashed: "/D",
-        solid: "/l", // lowercase L
+        solid: "/S",
         beveled: "/B",
         inset: "/I",
         underline: "/U"
